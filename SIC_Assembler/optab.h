@@ -3,7 +3,7 @@
 
 typedef struct _MIS {
 	char mnemonic[MIN_CHAR_LINE];
-	char opcode[MIN_CHAR_LINE];
+	char code[MIN_CHAR_LINE];
 } MIS;
 
 MIS OPTAB[59] = {

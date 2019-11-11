@@ -1,6 +1,7 @@
 #pragma once
 #include <string.h>
 #include <stdlib.h>
+
 // 10진수를 16진수로 바꿔주는 함수
 // '0'을 채워서 size 길이만큼 반환
 char* convert_Hx(int counter) {
@@ -8,7 +9,8 @@ char* convert_Hx(int counter) {
 	char convert[10] = { 0, };
 	int hexa, digit = 0;
 	char temp;
-	char* locctr = (char*)malloc(size);
+	char* locctr;
+	locctr = (char*)malloc(sizeof(char)*size);
 
 	while (digit < size) {
 		hexa = counter % 16;
@@ -26,7 +28,6 @@ char* convert_Hx(int counter) {
 		convert[j] = convert[i];
 		convert[i] = temp;
 	}
-
 	strcpy(locctr, convert);
 	return locctr;
 }

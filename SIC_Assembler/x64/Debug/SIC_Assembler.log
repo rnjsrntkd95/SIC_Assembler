@@ -1,0 +1,3 @@
+﻿  Assembler.c
+C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(35,35): warning C4047:  '==': 'char *'의 간접 참조 수준이 'int'과(와) 다릅니다.
+  SIC_Assembler.vcxproj -> C:\GitProject\SIC_Assembler_Compiler\x64\Debug\SIC_Assembler_Compiler.exe

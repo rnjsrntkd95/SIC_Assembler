@@ -1,3 +1,6 @@
 ﻿  Assembler.c
-C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(35,35): warning C4047:  '==': 'char *'의 간접 참조 수준이 'int'과(와) 다릅니다.
+C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\my_function.h(35,37): warning C4028:  정식 매개 변수 2이(가) 선언과 다릅니다.
+C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(63,39): warning C4047:  '==': 'int'의 간접 참조 수준이 'void *'과(와) 다릅니다.
+C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(66,33): warning C4047:  '=': 'char'의 간접 참조 수준이 'void *'과(와) 다릅니다.
+C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(72): warning C4172:  지역 변수 또는 임시: intermediate의 주소를 반환하고 있습니다.
   SIC_Assembler.vcxproj -> C:\GitProject\SIC_Assembler_Compiler\x64\Debug\SIC_Assembler_Compiler.exe

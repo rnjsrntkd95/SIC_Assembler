@@ -1,12 +1,18 @@
 #pragma once
-#define MIN_CHAR_LINE 10
+#define TABLE_CHAR_LINE 10
+
+typedef struct _Symbol_Table {
+	char label[TABLE_CHAR_LINE];
+	char location[TABLE_CHAR_LINE];
+	int error_flag;
+} Symbol;
 
 typedef struct _MIS {
-	char mnemonic[MIN_CHAR_LINE];
-	char code[MIN_CHAR_LINE];
+	char mnemonic[TABLE_CHAR_LINE];
+	char code[TABLE_CHAR_LINE];
 } MIS;
 
-MIS OPTAB[59] = {
+static MIS OPTAB[59] = {
 	{"ADD", "18"},{"ADDF", "58"},{"ADDR","90"},{"AND","40"},
 	{"CLEAR","B4"},{"COMP","28"},{"COMPF","88"},{"COMPR","A0"},
 	{"DIV","24"},{"DIVF","64"},{"DIVR","9C"},{"FIX","C4"},

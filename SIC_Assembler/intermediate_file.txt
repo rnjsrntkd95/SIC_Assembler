@@ -1,0 +1,30 @@
+5	ADD	START	1000
+10	FIRST	LDA	ABC
+12		ADD	TEN
+15		STA	TOTAL
+17	ABC	RESW	1
+18	TEN	WORD	10
+20	TOTAL	RESW	1
+25		END	FIRST
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			

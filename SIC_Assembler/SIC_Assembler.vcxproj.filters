@@ -20,13 +20,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="optab.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="symtab.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="my_function.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="table.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

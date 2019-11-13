@@ -1,6 +1,11 @@
 #pragma once
 #define TABLE_CHAR_LINE 10
 
+typedef struct _LOCCTR {
+	char loc[TABLE_CHAR_LINE];
+	char line[TABLE_CHAR_LINE];
+} LOCCTR;
+
 typedef struct _Symbol_Table {
 	char label[TABLE_CHAR_LINE];
 	char location[TABLE_CHAR_LINE];

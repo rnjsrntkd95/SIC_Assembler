@@ -1,5 +1,8 @@
 #pragma once
+#include <math.h>
+
 void convert_Hx(int decNum, char* location, int length);
+int convert_dec(char* hexa);
 char* strcopy(char* dest, char* src);
 
 // 10진수를 16진수로 바꿔주는 함수
@@ -26,6 +29,13 @@ void convert_Hx(int decNum, char* location, int length) {
 		convert[i] = temp;
 	}
 	strcpy(location, convert);
+}
+
+// 16진수를 10진수로 변환
+int convert_dec(char* hexa) {
+	char* ptr = NULL;
+
+	return strtol(hexa, &ptr, 16);
 }
 
 

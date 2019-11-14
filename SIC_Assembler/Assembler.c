@@ -31,7 +31,7 @@ int main(void) {
 
 	State* intermediate = make_intermediate();
 	Symbol* symtab = insert_symtab(intermediate);
-	//write_file(intermediate);
+	write_file(intermediate);
 	program_length = locctr - starting_address;
 	// 1PASS ³¡//
 
@@ -131,7 +131,7 @@ Symbol* insert_symtab(State* sic) {
 				char* type = classify - 1;
 				if (*type == 'C') {
 					type += 2;
-					while (*type == 39) {
+					while (*type != 39) {
 						locctr++;
 						type++;
 					}
@@ -139,7 +139,7 @@ Symbol* insert_symtab(State* sic) {
 				else if (*type == 'X') {
 					int count = 0;
 					type += 2;
-					while (*type == 39) {
+					while (*type != 39) {
 						count++;
 						type++;
 					}

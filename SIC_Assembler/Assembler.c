@@ -17,7 +17,7 @@ typedef struct _Statement {
 } State;
 
 typedef struct  _Objectcode {
-	char code[7];
+	char code[MAX_CHAR_LINE];
 } Object;
 
 static int input_counter;
@@ -27,7 +27,7 @@ static LOCCTR Location[MAX_INPUT_LINE];
 
 State* read_file();
 void write_file(State* sic);
-Symbol* pass_1(State *sic);
+Symbol* pass_1(State* sic);
 Object* pass_2(Symbol* symtab, int program_length);
 
 int main(void) {
@@ -46,8 +46,8 @@ int main(void) {
 
 
 	// Print
-	printf("\n\n\t\t1PASS 종료\n\n");
-	printf("%-8s%-10s%-10s%-10s%-10s%-15s\n", "LINE","LOCATION","LABEL","OPCODE","OPERAND","OBJECT CODE");
+	printf("\n\n\t\t1PASS - 2PASS 종료\n\n");
+	printf("%-8s%-10s%-10s%-10s%-10s%s\n", "LINE", "LOCATION", "LABEL", "OPCODE", "OPERAND", "OBJECT CODE");
 	printf("------------------------------------------------------------\n");
 	for (int i = 0; i < input_counter; i++) {
 		printf("%-8s%-10s%-10s%-10s%-10s%-15s\n", sic[i].line, Location[i].loc,
@@ -59,26 +59,25 @@ int main(void) {
 	for (int j = 0; *symtab[j].label != '\0'; j++) {
 		printf("%-10s%-10s%-10d\n", symtab[j].label, symtab[j].location, symtab[j].error_flag);
 	}
-	
-	
 
-
-
-	////SYMTAB 카운트 조건 //이거되면 전역변수에 static int symtab_counter필요없음
-	//for (int i = 0; *symtab[i].label != NULL; i++)
-	//	printf("%s\n", symtab[i].label);
 	return 0;
 }
+
+
 
 Object* pass_2(Symbol* symtab, int program_length) {
 	FILE* fileIn;
 	FILE* fileOut;
-	int i, check_op, check_sym;
+	int i, check_op, check_sym, buffer;
 	int text = 0;
 	static Object code_list[MAX_INPUT_LINE];
 	static State intermediate[MAX_INPUT_LINE] = { 0, };
+	char* classify;
+	char* point;
+	char* extract;
 	char get_line[MAX_CHAR_LINE];
 	char convert[MAX_CHAR_LINE];
+
 
 	i = 0;
 	fileIn = fopen("./intermediate_file.txt", "r");
@@ -101,17 +100,74 @@ Object* pass_2(Symbol* symtab, int program_length) {
 		if (!strcmp(intermediate[i].opcode, "START")) {
 			fprintf(fileOut, "%s %s", "H", intermediate[i].label);
 			for (int space = 0; space < 6 - strlen(intermediate[i].label); space++)
-				fprintf(fileOut, "%s"," ");
+				fprintf(fileOut, "%s", " ");
 			fprintf(fileOut, "%s", " ");
 		}
 		i++;
-	} while (!strcmp(intermediate[i -1].opcode, "START"));
+	} while (!strcmp(intermediate[i - 1].opcode, "START"));
 	i--;
 	convert_Hx(starting_address, convert, 6);
 	fprintf(fileOut, "%s ", convert);
 	convert_Hx(program_length, convert, 6);
 	fprintf(fileOut, "%s \n", convert);
-	// 헤더 라인 끝		
+	// 헤더 라인 끝
+
+	while (strcmp(intermediate[i].opcode, "END")) {
+		for (check_op = 0; check_op < (sizeof(OPTAB) / 2) / sizeof(OPTAB[0].mnemonic); check_op++) {
+			if (strcmp(intermediate[i].opcode, OPTAB[check_op].mnemonic)) 
+				continue;
+			strcopy(code_list[i].code, OPTAB[check_op].code);
+
+			for (check_sym = 0; *symtab[check_sym].label != '\0'; check_sym++) {
+				if (strcmp(intermediate[i].operand, symtab[check_sym].label))
+					continue;
+				strcat(code_list[i].code, symtab[check_sym].location);
+			}
+		}
+		if (!strcmp(intermediate[i].opcode, "BYTE")) {
+			classify = strchr(intermediate[i].operand, 39);
+			if (classify != NULL) {
+				point = classify - 1;
+				if (*point == 'C') {
+					point += 2;
+					while (*point != 39) {
+						convert_Hx((int)*point, convert, 2);
+						strcat(code_list[i].code, convert);
+						point++;
+					}
+				}
+				else if (*point == 'X') {
+					point += 2;
+					strcopy(code_list[i].code, strtok(point, "'"));
+				}
+			}
+			else {
+				buffer = atoi(intermediate[i].operand);
+				convert_Hx(buffer, code_list[i].code, 6);
+			}
+		}
+		else if (!strcmp(intermediate[i].opcode, "WORD")) {
+			buffer = atoi(intermediate[i].operand);
+			convert_Hx(buffer, code_list[i].code, 6);
+		}
+		i++;
+		fgets(get_line, sizeof(get_line), fileIn);
+		printf("%s", get_line);
+		strcopy(intermediate[i].line, strtok(get_line, " \t\n"));
+		strcopy(intermediate[i].label, strtok(NULL, " \t\n"));
+		strcopy(intermediate[i].opcode, strtok(NULL, " \t\n"));
+		strcopy(intermediate[i].operand, strtok(NULL, " \t\n"));
+		if (*intermediate[i].operand == '\0') {
+			strcopy(intermediate[i].operand, intermediate[i].opcode);
+			strcopy(intermediate[i].opcode, intermediate[i].label);
+			*intermediate[i].label = '\0';
+		}
+
+	}
+
+	/*
+		OBJECT PROGRAM의 TEXT 라인과 END 라인 작성
+	*/
 
 	fclose(fileIn);
 	fclose(fileOut);
@@ -123,9 +179,10 @@ Object* pass_2(Symbol* symtab, int program_length) {
 Symbol* pass_1(State* sic) {
 	static Symbol symtab[MAX_INPUT_LINE] = { 0, };
 	int check, overlap, i;
-	int row = 0, present = 0, counter=0;
-	char temp[LOCCTR_LENGTH+1];
-	char* hexa = (char*)malloc(sizeof(char)* LOCCTR_LENGTH +1);
+	int row = 0, present = 0, counter = 0;
+	char* hexa = (char*)malloc(sizeof(char) * LOCCTR_LENGTH + 1);
+	char* classify;
+	char* point;
 	i = 0;
 
 	while (strcmp(sic[i].opcode, "END")) {
@@ -137,7 +194,7 @@ Symbol* pass_1(State* sic) {
 			strcopy(Location[i].loc, hexa);
 			i++;
 			continue;
-		} 
+		}
 		// 현재 location을 저장
 		convert_Hx(locctr, hexa, LOCCTR_LENGTH);
 		strcopy(Location[i].loc, hexa);
@@ -178,7 +235,7 @@ Symbol* pass_1(State* sic) {
 		}
 		if (!strcmp(sic[i].opcode, "WORD")) {
 			locctr += 3;
-		}	
+		}
 		else if (!strcmp(sic[i].opcode, "RESW")) {
 			locctr += 3 * atoi(sic[i].operand);
 		}
@@ -186,22 +243,22 @@ Symbol* pass_1(State* sic) {
 			locctr += atoi(sic[i].operand);
 		}
 		else if (!strcmp(sic[i].opcode, "BYTE")) {
-			char* classify = strchr(sic[i].operand, 39);
+			classify = strchr(sic[i].operand, 39);
 			if (classify != NULL) {
-				char* type = classify - 1;
-				if (*type == 'C') {
-					type += 2;
-					while (*type != 39) {
+				point = classify - 1;
+				if (*point == 'C') {
+					point += 2;
+					while (*point != 39) {
 						locctr++;
-						type++;
+						point++;
 					}
 				}
-				else if (*type == 'X') {
+				else if (*point == 'X') {
 					int count = 0;
-					type += 2;
-					while (*type != 39) {
+					point += 2;
+					while (*point != 39) {
 						count++;
-						type++;
+						point++;
 					}
 					locctr += count / 2;
 				}
@@ -261,7 +318,7 @@ State* read_file() {
 }
 
 
-void write_file(State *intermediate) {
+void write_file(State* intermediate) {
 	FILE* sic;
 	sic = fopen("intermediate_file.txt", "w");
 	if (sic == NULL) {

@@ -1,7 +1,5 @@
 ﻿  Assembler.c
-C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(51,42): warning C4047:  '!=': 'int'의 간접 참조 수준이 'void *'과(와) 다릅니다.
-C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(86,28): warning C4047:  '!=': 'int'의 간접 참조 수준이 'void *'과(와) 다릅니다.
-C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(67,7): warning C4101:  'temp' :참조되지 않은 지역 변수입니다.
-C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(191,39): warning C4047:  '==': 'int'의 간접 참조 수준이 'void *'과(와) 다릅니다.
-C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(194,33): warning C4047:  '=': 'char'의 간접 참조 수준이 'void *'과(와) 다릅니다.
+C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(76,19): warning C4101:  'check_sym' :참조되지 않은 지역 변수입니다.
+C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(76,9): warning C4101:  'check_op' :참조되지 않은 지역 변수입니다.
+C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(127,7): warning C4101:  'temp' :참조되지 않은 지역 변수입니다.
   SIC_Assembler.vcxproj -> C:\GitProject\SIC_Assembler_Compiler\x64\Debug\SIC_Assembler_Compiler.exe

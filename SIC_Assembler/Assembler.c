@@ -16,41 +16,52 @@ typedef struct _Statement {
 	char operand[MAX_CHAR_LINE];
 } State;
 
+typedef struct  _Objectcode {
+	char code[7];
+} Object;
+
 static int input_counter;
 static int starting_address;
 static int locctr;
 static LOCCTR Location[MAX_INPUT_LINE];
 
-State* make_intermediate();
-void write_file(State* intermediate);
-Symbol* insert_symtab(State *sic);
+State* read_file();
+void write_file(State* sic);
+Symbol* pass_1(State *sic);
+Object* pass_2(Symbol* symtab, int program_length);
 
 int main(void) {
 	int program_length;
 	locctr = 0;;
 
-	State* intermediate = make_intermediate();
-	Symbol* symtab = insert_symtab(intermediate);
-	write_file(intermediate);
+	State* sic = read_file();
+	Symbol* symtab = pass_1(sic);
+	write_file(sic);
 	program_length = locctr - starting_address;
 	// 1PASS 끝//
+
+	Object* code_list = pass_2(symtab, program_length);
+
 
 
 
 	// Print
 	printf("\n\n\t\t1PASS 종료\n\n");
-	printf("%-8s%-10s%-10s%-10s%-10s\n", "LINE","LOCATION","LABEL","OPCODE","OPERAND");
-	printf("------------------------------------------------\n");
+	printf("%-8s%-10s%-10s%-10s%-10s%-15s\n", "LINE","LOCATION","LABEL","OPCODE","OPERAND","OBJECT CODE");
+	printf("------------------------------------------------------------\n");
 	for (int i = 0; i < input_counter; i++) {
-		printf("%-8s%-10s%-10s%-10s%-10s\n", intermediate[i].line, Location[i].loc, 
-			intermediate[i].label, intermediate[i].opcode, intermediate[i].operand);
+		printf("%-8s%-10s%-10s%-10s%-10s%-15s\n", sic[i].line, Location[i].loc,
+			sic[i].label, sic[i].opcode, sic[i].operand, code_list[i].code);
 	}
 	printf("\n\n\tSYMTAB\n\n");
 	printf("%-10s%-10s%-10s\n", "LABEL", "LOCATION", "ERROR");
 	printf("--------------------------\n");
-	for (int j = 0; *symtab[j].label != NULL; j++) {
+	for (int j = 0; *symtab[j].label != '\0'; j++) {
 		printf("%-10s%-10s%-10d\n", symtab[j].label, symtab[j].location, symtab[j].error_flag);
 	}
+	
+	
+
 
 
 	////SYMTAB 카운트 조건 //이거되면 전역변수에 static int symtab_counter필요없음
@@ -59,8 +70,57 @@ int main(void) {
 	return 0;
 }
 
+Object* pass_2(Symbol* symtab, int program_length) {
+	FILE* fileIn;
+	FILE* fileOut;
+	int i, check_op, check_sym;
+	int text = 0;
+	static Object code_list[MAX_INPUT_LINE];
+	static State intermediate[MAX_INPUT_LINE] = { 0, };
+	char get_line[MAX_CHAR_LINE];
+	char convert[MAX_CHAR_LINE];
 
-Symbol* insert_symtab(State* sic) {
+	i = 0;
+	fileIn = fopen("./intermediate_file.txt", "r");
+	fileOut = fopen("./object_program.txt", "w");
+	if (fileIn == NULL || fileOut == NULL) {
+		printf("\nERROR : Can't open the file!\n");
+		exit(1);
+	}
+	do {
+		fgets(get_line, sizeof(get_line), fileIn);
+		strcopy(intermediate[i].line, strtok(get_line, " \t\n"));
+		strcopy(intermediate[i].label, strtok(NULL, " \t\n"));
+		strcopy(intermediate[i].opcode, strtok(NULL, " \t\n"));
+		strcopy(intermediate[i].operand, strtok(NULL, " \t\n"));
+		if (*intermediate[i].operand == '\0') {
+			strcopy(intermediate[i].operand, intermediate[i].opcode);
+			strcopy(intermediate[i].opcode, intermediate[i].label);
+			*intermediate[i].label = '\0';
+		}
+		if (!strcmp(intermediate[i].opcode, "START")) {
+			fprintf(fileOut, "%s %s", "H", intermediate[i].label);
+			for (int space = 0; space < 6 - strlen(intermediate[i].label); space++)
+				fprintf(fileOut, "%s"," ");
+			fprintf(fileOut, "%s", " ");
+		}
+		i++;
+	} while (!strcmp(intermediate[i -1].opcode, "START"));
+	i--;
+	convert_Hx(starting_address, convert, 6);
+	fprintf(fileOut, "%s ", convert);
+	convert_Hx(program_length, convert, 6);
+	fprintf(fileOut, "%s \n", convert);
+	// 헤더 라인 끝		
+
+	fclose(fileIn);
+	fclose(fileOut);
+
+	return code_list;
+}
+
+
+Symbol* pass_1(State* sic) {
 	static Symbol symtab[MAX_INPUT_LINE] = { 0, };
 	int check, overlap, i;
 	int row = 0, present = 0, counter=0;
@@ -83,7 +143,7 @@ Symbol* insert_symtab(State* sic) {
 		strcopy(Location[i].loc, hexa);
 
 		// SYMTAB 중복 검사 후 삽입		
-		if (*sic[i].label != NULL) {
+		if (*sic[i].label != '\0') {
 			overlap = 0;
 			for (check = 0; check < counter; check++) {
 				if (!strcmp(symtab[check].label, sic[i].label)) {
@@ -163,47 +223,51 @@ Symbol* insert_symtab(State* sic) {
 
 
 // read SIC input file
-State* make_intermediate() {
-	static State intermediate[MAX_INPUT_LINE] = { 0, };
-	FILE* sic;
+State* read_file() {
+	static State sic[MAX_INPUT_LINE] = { 0, };
+	FILE* fileIn;
 	int i = 0;
 	char get_line[MAX_CHAR_LINE];
 	input_counter = 0;
 
-	sic = fopen("./sic_input2.txt", "r");
-	if (sic == NULL) {
+	fileIn = fopen("./sic_input2.txt", "r");
+	if (fileIn == NULL) {
 		printf("\nERROR : Can't open the file!\n");
 		exit(1);
 	}
-	while (fgets(get_line, sizeof(get_line), sic) != NULL) {
+	while (fgets(get_line, sizeof(get_line), fileIn) != NULL) {
 		input_counter++;
-		printf("%s", get_line);
-		strcopy(intermediate[i].line, strtok(get_line, " \t\n"));
-		strcopy(intermediate[i].label, strtok(NULL, " \t\n"));
-		strcopy(intermediate[i].opcode, strtok(NULL, " \t\n"));
-		strcopy(intermediate[i].operand, strtok(NULL, " \t\n"));
+		//printf("%s", get_line);
+		strcopy(sic[i].line, strtok(get_line, " \t\n"));
+		strcopy(sic[i].label, strtok(NULL, " \t\n"));
+		strcopy(sic[i].opcode, strtok(NULL, " \t\n"));
+		strcopy(sic[i].operand, strtok(NULL, " \t\n"));
 
 		// (...)주석 라인 넘김 처리
-		if (*intermediate[i].label == '.') {
+		if (*sic[i].label == '.') {
 			//i++;			//intermediate file에서 주석라인은 저장x
 			continue;
 		}
-		if (*intermediate[i].operand == NULL) {
-			strcopy(intermediate[i].operand, intermediate[i].opcode);
-			strcopy(intermediate[i].opcode, intermediate[i].label);
-			*intermediate[i].label = NULL;
+		if (*sic[i].operand == '\0') {
+			strcopy(sic[i].operand, sic[i].opcode);
+			strcopy(sic[i].opcode, sic[i].label);
+			*sic[i].label = '\0';
 		}
 		i++;
 	}
-	fclose(sic);
+	fclose(fileIn);
 
-	return intermediate;
+	return sic;
 }
 
 
 void write_file(State *intermediate) {
 	FILE* sic;
 	sic = fopen("intermediate_file.txt", "w");
+	if (sic == NULL) {
+		printf("\nERROR : Can't open the file!\n");
+		exit(1);
+	}
 	for (int i = 0; i < MAX_CHAR_LINE; i++)
 		fprintf(sic, "%s\t%s\t%s\t%s\n", intermediate[i].line, intermediate[i].label,
 			intermediate[i].opcode, intermediate[i].operand);

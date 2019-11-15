@@ -3,7 +3,6 @@
 
 typedef struct _LOCCTR {
 	char loc[TABLE_CHAR_LINE];
-	char line[TABLE_CHAR_LINE];
 } LOCCTR;
 
 typedef struct _Symbol_Table {

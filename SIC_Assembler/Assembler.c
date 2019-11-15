@@ -41,23 +41,24 @@ int main(void) {
 	// 1PASS 끝//
 
 	Object* code_list = pass_2(symtab, program_length);
-
+	// 2PASS 끝 //
 
 
 
 	// Print
-	printf("\n\n\t\t1PASS - 2PASS 종료\n\n");
-	printf("%-8s%-10s%-10s%-10s%-10s%s\n", "LINE", "LOCATION", "LABEL", "OPCODE", "OPERAND", "OBJECT CODE");
-	printf("------------------------------------------------------------\n");
-	for (int i = 0; i < input_counter; i++) {
-		printf("%-8s%-10s%-10s%-10s%-10s%-15s\n", sic[i].line, Location[i].loc,
-			sic[i].label, sic[i].opcode, sic[i].operand, code_list[i].code);
-	}
 	printf("\n\n\tSYMTAB\n\n");
 	printf("%-10s%-10s%-10s\n", "LABEL", "LOCATION", "ERROR");
 	printf("--------------------------\n");
 	for (int j = 0; *symtab[j].label != '\0'; j++) {
 		printf("%-10s%-10s%-10d\n", symtab[j].label, symtab[j].location, symtab[j].error_flag);
+	}
+
+	printf("\n\n\t\t1PASS - 2PASS 종료\n\n");
+	printf("%-8s%-10s%-10s%-10s%-10s%-15s\n", "LINE", "LOCATION", "LABEL", "OPCODE", "OPERAND", "OBJECT CODE");
+	printf("------------------------------------------------------------\n");
+	for (int i = 0; i < input_counter; i++) {
+		printf("%-8s%-10s%-10s%-10s%-10s%-15s\n", sic[i].line, Location[i].loc,
+			sic[i].label, sic[i].opcode, sic[i].operand, code_list[i].code);
 	}
 
 	return 0;
@@ -68,16 +69,16 @@ int main(void) {
 Object* pass_2(Symbol* symtab, int program_length) {
 	FILE* fileIn;
 	FILE* fileOut;
-	int i, check_op, check_sym, buffer;
-	int text = 0;
+	int i, zero, check_op, check_sym, buffer;
+	int text_counter = 0, text_length = 0, text_start = 0;
 	static Object code_list[MAX_INPUT_LINE];
-	static State intermediate[MAX_INPUT_LINE] = { 0, };
+	static State intermediate[MAX_INPUT_LINE];
 	char* classify;
 	char* point;
 	char* extract;
+	char max_text[100];
 	char get_line[MAX_CHAR_LINE];
 	char convert[MAX_CHAR_LINE];
-
 
 	i = 0;
 	fileIn = fopen("./intermediate_file.txt", "r");
@@ -105,23 +106,29 @@ Object* pass_2(Symbol* symtab, int program_length) {
 		}
 		i++;
 	} while (!strcmp(intermediate[i - 1].opcode, "START"));
+
 	i--;
 	convert_Hx(starting_address, convert, 6);
 	fprintf(fileOut, "%s ", convert);
 	convert_Hx(program_length, convert, 6);
 	fprintf(fileOut, "%s \n", convert);
-	// 헤더 라인 끝
+	// OBJECT PROGRAM HEADER LINE finish
 
 	while (strcmp(intermediate[i].opcode, "END")) {
 		for (check_op = 0; check_op < (sizeof(OPTAB) / 2) / sizeof(OPTAB[0].mnemonic); check_op++) {
-			if (strcmp(intermediate[i].opcode, OPTAB[check_op].mnemonic)) 
-				continue;
-			strcopy(code_list[i].code, OPTAB[check_op].code);
+			if (!strcmp(intermediate[i].opcode, OPTAB[check_op].mnemonic)) {
+				strcopy(code_list[i].code, OPTAB[check_op].code);
 
-			for (check_sym = 0; *symtab[check_sym].label != '\0'; check_sym++) {
-				if (strcmp(intermediate[i].operand, symtab[check_sym].label))
-					continue;
-				strcat(code_list[i].code, symtab[check_sym].location);
+				for (check_sym = 0; *symtab[check_sym].label != '\0'; check_sym++) {
+					if (!strcmp(intermediate[i].operand, symtab[check_sym].label)) {
+						strcat(code_list[i].code, symtab[check_sym].location);
+						break;
+					}
+				}
+				if (!strcmp(intermediate[i].opcode, "RSUB"))
+					strcat(code_list[i].code, "0000");
+			
+				text_counter++;
 			}
 		}
 		if (!strcmp(intermediate[i].opcode, "BYTE")) {
@@ -145,14 +152,15 @@ Object* pass_2(Symbol* symtab, int program_length) {
 				buffer = atoi(intermediate[i].operand);
 				convert_Hx(buffer, code_list[i].code, 6);
 			}
+			text_counter++;
 		}
 		else if (!strcmp(intermediate[i].opcode, "WORD")) {
 			buffer = atoi(intermediate[i].operand);
 			convert_Hx(buffer, code_list[i].code, 6);
+			text_counter++;
 		}
 		i++;
 		fgets(get_line, sizeof(get_line), fileIn);
-		printf("%s", get_line);
 		strcopy(intermediate[i].line, strtok(get_line, " \t\n"));
 		strcopy(intermediate[i].label, strtok(NULL, " \t\n"));
 		strcopy(intermediate[i].opcode, strtok(NULL, " \t\n"));
@@ -162,13 +170,44 @@ Object* pass_2(Symbol* symtab, int program_length) {
 			strcopy(intermediate[i].opcode, intermediate[i].label);
 			*intermediate[i].label = '\0';
 		}
-
 	}
 
-	/*
-		OBJECT PROGRAM의 TEXT 라인과 END 라인 작성
-	*/
+	// OBJECT PROGRAM TEXT LINE
+	for (text_start = 0; *code_list[text_start].code == '\0'; text_start++);
 
+	while (text_counter != 0) {
+		if (*code_list[text_start].code == '\0') {
+			text_start++;
+			continue;
+		}
+		*max_text = '\0';
+		fprintf(fileOut, "%c ", 'T');
+		for (zero = 0; zero < 6 - strlen(Location[zero].loc); zero++) {
+			fprintf(fileOut, "%c", '0');
+		}
+		fprintf(fileOut, "%s ", Location[text_start].loc);
+		while (*code_list[text_start].code != '\0' && text_length + strlen(code_list[text_start+1].code) <= 60) {
+			strcat(max_text, code_list[text_start].code);
+			strcat(max_text, " ");
+			text_length += strlen(code_list[text_start].code);
+			text_start++;
+			text_counter--;
+		}
+		convert_Hx(text_length / 2, convert, 2);
+		fprintf(fileOut, "%s %s\n", convert, max_text);
+		text_length = 0;
+	}
+
+	// OBJECT PROGRAM END LINE
+	fprintf(fileOut, "%c ", 'E');
+	for (check_sym = 0; *symtab[check_sym].label != '\0'; check_sym++) {
+		if (strcmp(intermediate[i].operand, symtab[check_sym].label))
+			continue;
+		for (zero = 0; zero < 6 - strlen(symtab[check_sym].location); zero++) {
+			fprintf(fileOut, "%c", '0');
+		}
+		fprintf(fileOut, "%s", symtab[check_sym].location);
+	}
 	fclose(fileIn);
 	fclose(fileOut);
 
@@ -268,7 +307,7 @@ Symbol* pass_1(State* sic) {
 			}
 		}
 		else {
-			printf("ERROR : Invalid OPERATION code (LINE: %s)\n", sic[i].line);
+			printf("ERROR : Invalid OPCODE (LINE: %s)\n", sic[i].line);
 			exit(1);
 		}
 		i++;
@@ -287,14 +326,13 @@ State* read_file() {
 	char get_line[MAX_CHAR_LINE];
 	input_counter = 0;
 
-	fileIn = fopen("./sic_input2.txt", "r");
+	fileIn = fopen("./sic_input1.txt", "r");
 	if (fileIn == NULL) {
 		printf("\nERROR : Can't open the file!\n");
 		exit(1);
 	}
 	while (fgets(get_line, sizeof(get_line), fileIn) != NULL) {
 		input_counter++;
-		//printf("%s", get_line);
 		strcopy(sic[i].line, strtok(get_line, " \t\n"));
 		strcopy(sic[i].label, strtok(NULL, " \t\n"));
 		strcopy(sic[i].opcode, strtok(NULL, " \t\n"));
@@ -325,7 +363,7 @@ void write_file(State* intermediate) {
 		printf("\nERROR : Can't open the file!\n");
 		exit(1);
 	}
-	for (int i = 0; i < MAX_CHAR_LINE; i++)
+	for (int i = 0; i < MAX_INPUT_LINE; i++)
 		fprintf(sic, "%s\t%s\t%s\t%s\n", intermediate[i].line, intermediate[i].label,
 			intermediate[i].opcode, intermediate[i].operand);
 

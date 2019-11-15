@@ -1,3 +1,4 @@
 ﻿  Assembler.c
-C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(77,8): warning C4101:  'extract' :참조되지 않은 지역 변수입니다.
+C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(192,53): warning C4267:  '+=': 'size_t'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\GitProject\SIC_Assembler_Compiler\SIC_Assembler\Assembler.c(78,8): warning C4101:  'extract' :참조되지 않은 지역 변수입니다.
   SIC_Assembler.vcxproj -> C:\GitProject\SIC_Assembler_Compiler\x64\Debug\SIC_Assembler_Compiler.exe

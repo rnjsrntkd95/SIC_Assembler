@@ -45,13 +45,13 @@ int convert_dec(char* hexa) {
 char *strcopy(char* dest, char* src) {
 	int i;
 	if (src == NULL) {
-		dest[0] = 0;
+		dest[0] = '\0';
 		return 0;
 	}
 	for (i = 0; src[i] != '\0'; i++) {
 		dest[i] = src[i];
 	}
-	dest[i] = 0;
+	dest[i] ='\0';
 	return 0;
 }
 
